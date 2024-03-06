@@ -23,5 +23,11 @@ interface IRequestError {
   message: string;
   checkCode: (code: string) => void;
 }
+type Middleware = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => void | Promise<void>;
 
-export { Post, ControllerType, PostgresCodes, IRequestError };
+export { Post, ControllerType, PostgresCodes, IRequestError, Middleware };

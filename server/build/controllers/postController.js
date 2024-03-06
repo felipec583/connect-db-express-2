@@ -1,6 +1,6 @@
 import { RequestError, createError } from "../helpers/error.js";
 import * as postModel from "../models/postModel.js";
-const getAllPosts = async (req, res, next) => {
+const getAllPosts = async (_req, res, _next) => {
     try {
         const posts = await postModel.getAll();
         if (!posts) {
@@ -9,12 +9,15 @@ const getAllPosts = async (req, res, next) => {
         res.status(200).json(posts);
     }
     catch (error) {
+        /* Si el error atrapa un statusCode de la instancia
+        del RequestError, mandará el primer response,
+        sino un status 500  */
         error.statusCode
             ? res.status(error.statusCode).send(error.message)
             : res.status(500).json({ message: "Internal server error" });
     }
 };
-const addPost = async (req, res, next) => {
+const addPost = async (req, res, _next) => {
     try {
         const newPostData = req.body;
         const posts = await postModel.getAll();
@@ -31,14 +34,14 @@ const addPost = async (req, res, next) => {
             : res.status(500).json({ message: "Internal server error" });
     }
 };
-const removePost = async (req, res, next) => {
+const removePost = async (req, res, _next) => {
     try {
         const { id } = req.params;
         if (!id) {
             throw new RequestError(404, "This id does not exist");
         }
         const deletedPost = await postModel.remove(id);
-        res.status(204).send("Post deleted");
+        res.status(200).json({ "Post deleted": deletedPost });
         console.log(`POST WITH ID:${id} has been deleted`);
     }
     catch (error) {
@@ -50,18 +53,19 @@ const removePost = async (req, res, next) => {
         res.status(newError.statusCode).json({ message: newError.message });
     }
 };
-const incrementLikePost = async (req, res, next) => {
+const incrementLikePost = async (req, res, _next) => {
     try {
         const { id } = req.params;
         if (!id) {
-            res.sendStatus(404);
-            return;
+            throw new RequestError(400, "Bad request");
         }
-        const editedPost = await postModel.addLike(id);
+        await postModel.addLike(id);
         res.status(201).send("Se ha agregado un like");
     }
     catch (error) {
-        console.log(error);
+        error.statusCode
+            ? res.status(error.statusCode).send(error.message)
+            : res.status(500).json({ message: "Internal server error" });
     }
 };
 export { getAllPosts, addPost, removePost, incrementLikePost };
